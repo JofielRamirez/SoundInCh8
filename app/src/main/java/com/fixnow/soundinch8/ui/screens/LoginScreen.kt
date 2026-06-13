@@ -1,6 +1,5 @@
 package com.fixnow.soundinch8.ui.screens
 
-import androidx.benchmark.traceprocessor.Row
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -45,15 +44,17 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    onNavigateToRegister: () -> Unit
+    onNavigateToRegister: () -> Unit,
+    loginViewModel: LoginViewModel = viewModel()
 ) {
-    // Snackbar state lives here, not inside the LoginContent
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -68,13 +69,13 @@ fun LoginScreen(
             )
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) {
-        paddingValues ->
+    ) { paddingValues ->
         LoginContent(
             paddingValues = paddingValues,
             snackbarHostState = snackbarHostState,
             scope = scope,
-            onNavigateToRegister = onNavigateToRegister
+            onNavigateToRegister = onNavigateToRegister,
+            loginViewModel = loginViewModel
         )
     }
 }
@@ -83,47 +84,50 @@ fun LoginScreen(
 fun LoginContent(
     paddingValues: PaddingValues,
     snackbarHostState: SnackbarHostState,
-    scope : CoroutineScope,
-    onNavigateToRegister: () -> Unit
-    ) {
-    // local state -- will move to ViewModel later
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var rememberSession by remember { mutableStateOf(false) }
-    var emailError by remember { mutableStateOf(false) }
-    var passwordError by remember { mutableStateOf(false) }
-    var passwordVisible by remember { mutableStateOf(false) }
+    scope: CoroutineScope,
+    onNavigateToRegister: () -> Unit,
+    loginViewModel: LoginViewModel
+) {
+    val email by loginViewModel.email.collectAsStateWithLifecycle()
+    val password by loginViewModel.password.collectAsStateWithLifecycle()
+    val rememberSession by loginViewModel.rememberSession.collectAsStateWithLifecycle()
+    val emailError by loginViewModel.emailError.collectAsStateWithLifecycle()
+    val passwordError by loginViewModel.passwordError.collectAsStateWithLifecycle()
 
+    var passwordVisible by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(paddingValues) //Required: avoids TopAppBar overlap
-            .verticalScroll(rememberScrollState()) // allows scrolling on small screens
+            .padding(paddingValues)
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
-    )
-    {
+    ) {
         Spacer(modifier = Modifier.height(32.dp))
+
         Text(
             text = "S",
             style = MaterialTheme.typography.displayLarge,
             color = MaterialTheme.colorScheme.primary
         )
+
         Text(
             text = "SoundIn",
             style = MaterialTheme.typography.headlineMedium
         )
+
         Spacer(modifier = Modifier.height(16.dp))
+
         OutlinedTextField(
             value = email,
-            onValueChange = {email = it; emailError = false},
-            label = {Text("Email Address")},
+            onValueChange = { loginViewModel.onEmailChange(it) },
+            label = { Text("Email Address") },
             isError = emailError,
             supportingText = {
-                if (emailError){
+                if (emailError) {
                     Text(text = "Enter a valid email address")
                 }
             },
@@ -132,15 +136,15 @@ fun LoginContent(
                 imeAction = ImeAction.Next
             ),
             modifier = Modifier.fillMaxWidth()
-        ) // end the outlinedTextField for Email.
+        )
 
         OutlinedTextField(
             value = password,
-            onValueChange = {password = it; passwordError = false},
-            label = {Text("Password")},
+            onValueChange = { loginViewModel.onPasswordChange(it) },
+            label = { Text("Password") },
             isError = passwordError,
             supportingText = {
-                if (passwordError){
+                if (passwordError) {
                     Text("Minimum 6 characters")
                 }
             },
@@ -150,25 +154,27 @@ fun LoginContent(
                 PasswordVisualTransformation()
             },
             trailingIcon = {
-                IconButton(onClick = {passwordVisible = !passwordVisible}){
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
                     Icon(
-                        imageVector = if (passwordVisible){
+                        imageVector = if (passwordVisible) {
                             Icons.Default.Visibility
-                        } else{
+                        } else {
                             Icons.Default.VisibilityOff
                         },
-                        contentDescription = if (passwordVisible) "Hide Password" else "Show Password"
+                        contentDescription = if (passwordVisible) {
+                            "Hide Password"
+                        } else {
+                            "Show Password"
+                        }
                     )
                 }
             },
-
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Password,
                 imeAction = ImeAction.Done
             ),
             modifier = Modifier.fillMaxWidth()
-        ) // end of the OutlinedTextField for Password
-        // Remember Session Switch
+        )
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -179,19 +185,19 @@ fun LoginContent(
                 text = "Remember Session",
                 style = MaterialTheme.typography.bodyMedium
             )
+
             Switch(
                 checked = rememberSession,
-                onCheckedChange = {rememberSession = it}
+                onCheckedChange = { loginViewModel.onRememberSessionChange(it) }
             )
-        } // end of the ROW
+        }
 
-        // Login Button with Validation
         Button(
             onClick = {
-                emailError = !email.contains("@") || !email.contains(".")
-                passwordError = password.length < 6
-                if (emailError || passwordError){
-                    scope.launch{
+                val isValid = loginViewModel.validateAndLogin()
+
+                if (!isValid) {
+                    scope.launch {
                         snackbarHostState.showSnackbar(
                             "Invalid Email or Password",
                             actionLabel = "Dismiss"
@@ -200,19 +206,17 @@ fun LoginContent(
                 } else {
                     scope.launch {
                         snackbarHostState.showSnackbar(
-                            "Welcome to SoundIn =) ")
+                            "Welcome to SoundIn =)"
+                        )
                     }
                 }
-
-
             },
             modifier = Modifier.fillMaxWidth()
-        ){
+        ) {
             Text("Log In")
         }
 
-        //Link to registration
-        TextButton(onClick = onNavigateToRegister){
+        TextButton(onClick = onNavigateToRegister) {
             Text("Don't have an account? Register")
         }
     }
@@ -225,6 +229,7 @@ fun LoginContentPreview() {
         paddingValues = PaddingValues(0.dp),
         snackbarHostState = remember { SnackbarHostState() },
         scope = rememberCoroutineScope(),
-        onNavigateToRegister = {}
+        onNavigateToRegister = {},
+        loginViewModel = LoginViewModel()
     )
 }
