@@ -15,38 +15,18 @@ fun SoundInNavGraph(
     NavHost(
         navController = navController,
         startDestination = SoundInRoutes.LOGIN
-    ) {
-        composable(SoundInRoutes.LOGIN) {
+    ){
+        composable(SoundInRoutes.LOGIN){
             LoginScreen(
-                onNavigateToRegister = {
-                    navController.navigate(SoundInRoutes.REGISTER)
-                },
+                onNavigateToRegister = {},
                 onLoginSuccess = {
-                    navController.navigate(SoundInRoutes.MAIN) {
-                        popUpTo(SoundInRoutes.LOGIN) {
-                            inclusive = true
-                        }
+                    navController.navigate(SoundInRoutes.MAIN){
+                        popUpTo(SoundInRoutes.LOGIN){ inclusive = true }
                     }
                 }
             )
-        }
-
-        composable(SoundInRoutes.REGISTER) {
-            RegisterScreen(
-                onGoBack = {
-                    navController.popBackStack()
-                },
-                onRegisterSuccess = {
-                    navController.navigate(SoundInRoutes.MAIN) {
-                        popUpTo(SoundInRoutes.LOGIN) {
-                            inclusive = true
-                        }
-                    }
-                }
-            )
-        }
-
-        composable(SoundInRoutes.MAIN) {
+        } // end composable LOGIN
+        composable (SoundInRoutes.MAIN){
             MainScreen()
         }
     }
