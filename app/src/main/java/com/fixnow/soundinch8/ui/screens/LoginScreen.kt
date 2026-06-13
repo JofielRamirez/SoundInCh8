@@ -53,6 +53,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun LoginScreen(
     onNavigateToRegister: () -> Unit,
+    onLoginSuccess: () -> Unit,
     loginViewModel: LoginViewModel = viewModel()
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -68,13 +69,16 @@ fun LoginScreen(
                 )
             )
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        }
     ) { paddingValues ->
         LoginContent(
             paddingValues = paddingValues,
             snackbarHostState = snackbarHostState,
             scope = scope,
             onNavigateToRegister = onNavigateToRegister,
+            onLoginSuccess = onLoginSuccess,
             loginViewModel = loginViewModel
         )
     }
@@ -86,6 +90,7 @@ fun LoginContent(
     snackbarHostState: SnackbarHostState,
     scope: CoroutineScope,
     onNavigateToRegister: () -> Unit,
+    onLoginSuccess: () -> Unit,
     loginViewModel: LoginViewModel
 ) {
     val email by loginViewModel.email.collectAsStateWithLifecycle()
@@ -123,12 +128,16 @@ fun LoginContent(
 
         OutlinedTextField(
             value = email,
-            onValueChange = { loginViewModel.onEmailChange(it) },
-            label = { Text("Email Address") },
+            onValueChange = {
+                loginViewModel.onEmailChange(it)
+            },
+            label = {
+                Text("Email Address")
+            },
             isError = emailError,
             supportingText = {
                 if (emailError) {
-                    Text(text = "Enter a valid email address")
+                    Text("Enter a valid email address")
                 }
             },
             keyboardOptions = KeyboardOptions(
@@ -140,8 +149,12 @@ fun LoginContent(
 
         OutlinedTextField(
             value = password,
-            onValueChange = { loginViewModel.onPasswordChange(it) },
-            label = { Text("Password") },
+            onValueChange = {
+                loginViewModel.onPasswordChange(it)
+            },
+            label = {
+                Text("Password")
+            },
             isError = passwordError,
             supportingText = {
                 if (passwordError) {
@@ -154,7 +167,11 @@ fun LoginContent(
                 PasswordVisualTransformation()
             },
             trailingIcon = {
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                IconButton(
+                    onClick = {
+                        passwordVisible = !passwordVisible
+                    }
+                ) {
                     Icon(
                         imageVector = if (passwordVisible) {
                             Icons.Default.Visibility
@@ -188,7 +205,9 @@ fun LoginContent(
 
             Switch(
                 checked = rememberSession,
-                onCheckedChange = { loginViewModel.onRememberSessionChange(it) }
+                onCheckedChange = {
+                    loginViewModel.onRememberSessionChange(it)
+                }
             )
         }
 
@@ -199,15 +218,16 @@ fun LoginContent(
                 if (!isValid) {
                     scope.launch {
                         snackbarHostState.showSnackbar(
-                            "Invalid Email or Password",
+                            message = "Invalid Email or Password",
                             actionLabel = "Dismiss"
                         )
                     }
                 } else {
                     scope.launch {
                         snackbarHostState.showSnackbar(
-                            "Welcome to SoundIn =)"
+                            message = "Welcome to SoundIn =)"
                         )
+                        onLoginSuccess()
                     }
                 }
             },
@@ -216,7 +236,9 @@ fun LoginContent(
             Text("Log In")
         }
 
-        TextButton(onClick = onNavigateToRegister) {
+        TextButton(
+            onClick = onNavigateToRegister
+        ) {
             Text("Don't have an account? Register")
         }
     }
@@ -230,6 +252,7 @@ fun LoginContentPreview() {
         snackbarHostState = remember { SnackbarHostState() },
         scope = rememberCoroutineScope(),
         onNavigateToRegister = {},
+        onLoginSuccess = {},
         loginViewModel = LoginViewModel()
     )
 }

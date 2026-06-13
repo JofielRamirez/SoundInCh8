@@ -53,6 +53,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun RegisterScreen(
     onGoBack: () -> Unit,
+    onRegisterSuccess: () -> Unit,
     registerViewModel: RegisterViewModel = viewModel()
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -68,7 +69,9 @@ fun RegisterScreen(
         }
     }
 
-    BackHandler(enabled = !registerViewModel.isFormEmpty()) {
+    BackHandler(
+        enabled = !registerViewModel.isFormEmpty()
+    ) {
         showExitDialog = true
     }
 
@@ -108,9 +111,15 @@ fun RegisterScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Create Account") },
+                title = {
+                    Text("Create Account")
+                },
                 navigationIcon = {
-                    IconButton(onClick = { tryGoBack() }) {
+                    IconButton(
+                        onClick = {
+                            tryGoBack()
+                        }
+                    ) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Go Back"
@@ -136,11 +145,16 @@ fun RegisterScreen(
 
                 if (isValid) {
                     scope.launch {
-                        snackbarHostState.showSnackbar("Account created successfully")
+                        snackbarHostState.showSnackbar(
+                            message = "Account created successfully"
+                        )
+                        onRegisterSuccess()
                     }
                 } else {
                     scope.launch {
-                        snackbarHostState.showSnackbar("Please complete all fields correctly")
+                        snackbarHostState.showSnackbar(
+                            message = "Please complete all fields correctly"
+                        )
                     }
                 }
             }
@@ -179,8 +193,12 @@ fun RegisterContent(
     ) {
         OutlinedTextField(
             value = name,
-            onValueChange = { registerViewModel.onNameChange(it) },
-            label = { Text("Full Name") },
+            onValueChange = {
+                registerViewModel.onNameChange(it)
+            },
+            label = {
+                Text("Full Name")
+            },
             isError = nameError,
             supportingText = {
                 if (nameError) {
@@ -198,8 +216,12 @@ fun RegisterContent(
 
         OutlinedTextField(
             value = email,
-            onValueChange = { registerViewModel.onEmailChange(it) },
-            label = { Text("Email Address") },
+            onValueChange = {
+                registerViewModel.onEmailChange(it)
+            },
+            label = {
+                Text("Email Address")
+            },
             isError = emailError,
             supportingText = {
                 if (emailError) {
@@ -217,8 +239,12 @@ fun RegisterContent(
 
         OutlinedTextField(
             value = password,
-            onValueChange = { registerViewModel.onPasswordChange(it) },
-            label = { Text("Password") },
+            onValueChange = {
+                registerViewModel.onPasswordChange(it)
+            },
+            label = {
+                Text("Password")
+            },
             isError = passwordError,
             supportingText = {
                 if (passwordError) {
@@ -231,7 +257,11 @@ fun RegisterContent(
                 PasswordVisualTransformation()
             },
             trailingIcon = {
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                IconButton(
+                    onClick = {
+                        passwordVisible = !passwordVisible
+                    }
+                ) {
                     Icon(
                         imageVector = if (passwordVisible) {
                             Icons.Default.Visibility
@@ -257,8 +287,12 @@ fun RegisterContent(
 
         OutlinedTextField(
             value = confirmPassword,
-            onValueChange = { registerViewModel.onConfirmPasswordChange(it) },
-            label = { Text("Confirm Password") },
+            onValueChange = {
+                registerViewModel.onConfirmPasswordChange(it)
+            },
+            label = {
+                Text("Confirm Password")
+            },
             isError = confirmPasswordError,
             supportingText = {
                 if (confirmPasswordError) {
@@ -271,7 +305,11 @@ fun RegisterContent(
                 PasswordVisualTransformation()
             },
             trailingIcon = {
-                IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                IconButton(
+                    onClick = {
+                        confirmPasswordVisible = !confirmPasswordVisible
+                    }
+                ) {
                     Icon(
                         imageVector = if (confirmPasswordVisible) {
                             Icons.Default.Visibility
